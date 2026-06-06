@@ -1,0 +1,89 @@
+@import 'tailwindcss';
+
+/*
+ * Echo design system — §4 of CONTEXT.md.
+ * Tailwind v4 is config-less: design tokens live here in @theme
+ * (there is NO tailwind.config.js). These generate the utilities the app
+ * uses everywhere: bg-bg / bg-surface / border-border /
+ * bg-accent + hover:bg-accent-hover / text-ink / text-muted / text-accent.
+ */
+@theme {
+  --color-bg: #0b0b0f;
+  --color-surface: #15151c;
+  --color-border: #23232e;
+  --color-accent: #2f6bff;
+  --color-accent-hover: #1e54e6;
+  --color-ink: #f4f4f6;
+  --color-muted: #9a9aa6;
+
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  /* Motion (§7, CP6): screen/panel entrance + the Echo "ripple" loader.
+     Exposed as the animate-rise / animate-fade-in / animate-ripple utilities. */
+  --animate-rise: rise 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-fade-in: fade-in 0.3s ease-out both;
+  --animate-ripple: echo-ripple 1.9s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Screen/panel entrance — a brief fade + lift, replayed on navigation. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Concentric rings expanding outward — the loader's literal "echo". */
+@keyframes echo-ripple {
+  0% {
+    transform: scale(0.5);
+    opacity: 0.6;
+  }
+  80% {
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.65);
+    opacity: 0;
+  }
+}
+
+/* Honor reduced-motion: kill the looping ripple, stop any infinite loops. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-iteration-count: 1 !important;
+  }
+  .animate-ripple {
+    animation: none !important;
+  }
+}
