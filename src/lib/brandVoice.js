@@ -45,3 +45,27 @@ export function saveBrandVoice(voice) {
     // Private mode / quota errors are non-fatal; in-memory state still works.
   }
 }
+
+/*
+ * Normalize the stored samples blob into the §6 contract shape (`string[]`,
+ * 0–4 posts). The Setup screen keeps one low-friction textarea; we split it into
+ * discrete posts at the API seam (blank line = post boundary) so the synthesis
+ * prompt gets real samples to match, not one wall of text.
+ */
+export function samplesToArray(samples) {
+  if (Array.isArray(samples)) return samples.slice(0, 4)
+  if (typeof samples !== 'string') return []
+  return samples
+    .split(/\n\s*\n/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 4)
+}
+
+// Map a tone id ('bold') or contract Tone ('Bold') to its display label, or
+// null if unknown — so renderers can show a tone chip from either source.
+export function toneLabel(tone) {
+  if (!tone) return null
+  const id = String(tone).toLowerCase()
+  return TONE_PRESETS.find((p) => p.id === id)?.label ?? null
+}

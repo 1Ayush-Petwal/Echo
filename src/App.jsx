@@ -77,7 +77,13 @@ export default function App() {
         {screen === 'loading' && (
           <Loading request={request} onDone={handleDone} onError={handleError} />
         )}
-        {screen === 'results' && <Results kit={kit} onNew={() => go('capture')} />}
+        {screen === 'results' && (
+          <Results
+            kit={kit}
+            brandVoice={request?.brandVoice}
+            onNew={() => go('capture')}
+          />
+        )}
         {screen === 'error' && (
           <GenerationError
             onRetry={() => go('loading')}
