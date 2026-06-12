@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import Button from '../components/Button'
 import {
+  SOURCES,
   TONE_PRESETS,
   hasVoice,
   loadBrandVoice,
@@ -8,40 +9,86 @@ import {
 } from '../lib/brandVoice'
 
 /*
- * Brand Voice Setup (§5, CP3). The creator teaches Echo how they sound by
- * picking a tone preset and/or pasting a few of their posts. The voice is
- * persisted to localStorage on every change (via the brandVoice lib) and
- * re-loaded on launch — so a refresh keeps the saved voice, the CP3 done-bar.
+ * Brand Voice Setup (§5, CP3 — redesigned light). The creator teaches Echo how
+ * they sound: paste a few posts, say where they're from (optional), and/or pick
+ * a tone. Order mirrors how creators think — their words first, then the source
+ * label, then the tone that fills the gaps (§7.2). Persisted to localStorage on
+ * every change (via the brandVoice lib) and re-loaded on launch.
  */
 export default function BrandVoiceSetup({ onContinue }) {
   // Lazy init so a returning creator sees their saved voice on launch.
   const [voice, setVoice] = useState(loadBrandVoice)
 
-  // Persist on every change — guarantees a refresh keeps the voice even if the
-  // creator never taps Continue.
+  // Persist on every change — a refresh keeps the voice even without Continue.
   useEffect(() => {
     saveBrandVoice(voice)
   }, [voice])
 
+  const setSamples = (samples) => setVoice((v) => ({ ...v, samples }))
+  // Source + tone are single-select and tap-to-clear, so both stay optional.
+  const toggleSource = (id) =>
+    setVoice((v) => ({ ...v, source: v.source === id ? null : id }))
   const toggleTone = (id) =>
     setVoice((v) => ({ ...v, tone: v.tone === id ? null : id }))
 
-  const setSamples = (samples) => setVoice((v) => ({ ...v, samples }))
-
   return (
-    <section className="flex flex-1 flex-col gap-6">
+    <section className="flex flex-1 flex-col gap-7">
       <div className="space-y-2">
         <h1 className="text-2xl font-bold tracking-tight text-ink">
           Set your brand voice
         </h1>
         <p className="text-pretty leading-relaxed text-muted">
-          Teach Echo how you sound. Pick a tone, paste a few posts, or both —
-          we'll match it on every platform.
+          Teach Echo how you sound. Paste a few posts, pick a tone, or both —
+          we&apos;ll match it on every platform.
         </p>
       </div>
 
+      {/* 1 — Their words first. */}
+      <div className="space-y-2.5">
+        <label htmlFor="samples" className="text-sm font-semibold text-ink">
+          Your posts <span className="font-normal text-muted">· optional</span>
+        </label>
+        <textarea
+          id="samples"
+          value={voice.samples}
+          onChange={(e) => setSamples(e.target.value)}
+          rows={4}
+          placeholder={'Paste 2–4 of your posts here.\nEcho learns your phrasing, rhythm, and go-to words.'}
+          className="w-full resize-none rounded-2xl border border-border bg-surface px-4 py-3 text-base leading-relaxed text-ink shadow-card placeholder:text-muted/70 focus:border-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+        />
+
+        {/* 2 — Where those posts came from (labels the samples; optional). */}
+        <div className="space-y-2 pt-1.5">
+          <p className="text-sm font-medium text-muted">Where are these from?</p>
+          <div className="flex flex-wrap gap-2">
+            {SOURCES.map((s) => {
+              const active = voice.source === s.id
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => toggleSource(s.id)}
+                  aria-pressed={active}
+                  className={[
+                    'rounded-full border px-4 py-2 text-sm font-medium transition duration-150 active:scale-95',
+                    'focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60',
+                    'focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
+                    active
+                      ? 'border-accent bg-accent text-white'
+                      : 'border-border bg-surface text-ink shadow-card hover:border-accent/40',
+                  ].join(' ')}
+                >
+                  {s.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* 3 — Tone fills the gaps the samples don't cover (§7.2). */}
       <fieldset className="space-y-3">
-        <legend className="pb-1 text-sm font-medium text-muted">Tone</legend>
+        <legend className="pb-1 text-sm font-semibold text-ink">Tone</legend>
         <div className="grid grid-cols-2 gap-3">
           {TONE_PRESETS.map((preset) => {
             const active = voice.tone === preset.id
@@ -52,7 +99,7 @@ export default function BrandVoiceSetup({ onContinue }) {
                 onClick={() => toggleTone(preset.id)}
                 aria-pressed={active}
                 className={[
-                  'rounded-2xl border p-4 text-left transition duration-150 active:scale-[0.99]',
+                  'rounded-2xl border p-4 text-left shadow-card transition duration-150 active:scale-[0.99]',
                   'focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60',
                   'focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
                   active
@@ -72,20 +119,6 @@ export default function BrandVoiceSetup({ onContinue }) {
           })}
         </div>
       </fieldset>
-
-      <div className="space-y-2">
-        <label htmlFor="samples" className="text-sm font-medium text-muted">
-          Sample posts <span className="text-muted/70">· optional</span>
-        </label>
-        <textarea
-          id="samples"
-          value={voice.samples}
-          onChange={(e) => setSamples(e.target.value)}
-          rows={4}
-          placeholder={'Paste 2–4 of your posts here.\nEcho learns your phrasing, rhythm, and go-to words.'}
-          className="w-full resize-none rounded-2xl border border-border bg-surface px-4 py-3 text-base leading-relaxed text-ink placeholder:text-muted/60 focus:border-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
-        />
-      </div>
 
       <div className="mt-auto space-y-3 pt-2">
         <Button onClick={onContinue}>Continue</Button>

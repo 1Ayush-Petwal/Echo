@@ -1,5 +1,18 @@
 import { samplesToArray } from './brandVoice'
 
+// Defensive normalize of the optional inspiration payload to a stable shape:
+// trimmed reference text + image descriptors (no bytes/urls), capped at a few.
+function normalizeInspiration(inspiration) {
+  if (!inspiration || typeof inspiration !== 'object') return { refs: '', visuals: [] }
+  const refs = typeof inspiration.refs === 'string' ? inspiration.refs.trim() : ''
+  const visuals = Array.isArray(inspiration.visuals)
+    ? inspiration.visuals
+        .slice(0, 6)
+        .map((v) => ({ name: v?.name, type: v?.type, size: v?.size }))
+    : []
+  return { refs, visuals }
+}
+
 /*
  * Client → synthesis endpoint (§7, CP7). The single place that knows how to call
  * POST /api/generate. The endpoint returns the §6 mock kit today; the real
@@ -10,14 +23,20 @@ import { samplesToArray } from './brandVoice'
  * We normalize brandVoice to the §6 contract here (samples → string[]) so the
  * server always receives the same shape the prompt builder expects.
  */
-export async function generateKit({ input, image, brandVoice } = {}) {
+export async function generateKit({ input, image, brandVoice, inspiration } = {}) {
   const payload = {
     input,
     image,
     brandVoice: {
       tone: brandVoice?.tone ?? null,
       samples: samplesToArray(brandVoice?.samples),
+      // Where the samples are from (§ source selector) — a platform hint the
+      // server uses to pick a sharper default register.
+      source: brandVoice?.source ?? null,
     },
+    // Optional reference material (the Inspiration step). Images travel as
+    // descriptors only until real bytes are wired in at the event.
+    inspiration: normalizeInspiration(inspiration),
   }
   const res = await fetch('/api/generate', {
     method: 'POST',

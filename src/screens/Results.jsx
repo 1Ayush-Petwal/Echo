@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import Button from '../components/Button'
 import ScreenScaffold from '../components/ScreenScaffold'
+import VoiceTag from '../components/VoiceTag'
 import { toneLabel } from '../lib/brandVoice'
 
 const TABS = [
@@ -18,7 +19,7 @@ const TABS = [
  * shows the voice it's written in. The endpoint returns mock JSON until the
  * event; these renderers don't change when the real model lands.
  */
-export default function Results({ onNew, kit, brandVoice }) {
+export default function Results({ onNew, onChangeVoice, kit, brandVoice }) {
   const [tab, setTab] = useState('reel')
 
   // Defensive empty state (§7, CP6). The mock always provides a full kit, but
@@ -35,19 +36,22 @@ export default function Results({ onNew, kit, brandVoice }) {
 
   return (
     <section className="flex flex-1 flex-col gap-5">
-      <div className="space-y-1">
-        <h1 className="text-xl font-bold tracking-tight text-ink">
-          Your kit is ready
-        </h1>
-        <p className="text-sm text-muted">
-          Three platform-ready posts, in your voice.
-        </p>
+      <div className="space-y-3">
+        <div className="space-y-1">
+          <h1 className="text-xl font-bold tracking-tight text-ink">
+            Your kit is ready
+          </h1>
+          <p className="text-sm text-muted">
+            Three platform-ready posts, in your voice.
+          </p>
+        </div>
+        <VoiceTag onChange={onChangeVoice} />
       </div>
 
       <div
         role="tablist"
         aria-label="Content formats"
-        className="grid grid-cols-3 gap-1 rounded-2xl border border-border bg-surface p-1"
+        className="grid grid-cols-3 gap-1 rounded-2xl border border-border bg-surface shadow-card p-1"
       >
         {TABS.map((t) => {
           const active = tab === t.id
@@ -121,7 +125,7 @@ function ReelView({ reel, tone }) {
         Reel · script + shots
       </SectionBar>
 
-      <div className="rounded-2xl border border-border bg-surface p-4">
+      <div className="rounded-2xl border border-border bg-surface shadow-card p-4">
         <p className="text-[11px] font-semibold uppercase tracking-wide text-accent">
           Hook
         </p>
@@ -130,7 +134,7 @@ function ReelView({ reel, tone }) {
         </p>
       </div>
 
-      <div className="rounded-2xl border border-border bg-surface p-4">
+      <div className="rounded-2xl border border-border bg-surface shadow-card p-4">
         <div className="flex items-center justify-between gap-3">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
             Script
@@ -155,7 +159,7 @@ function ReelView({ reel, tone }) {
             return (
               <li
                 key={i}
-                className="rounded-2xl border border-border bg-surface p-3.5"
+                className="rounded-2xl border border-border bg-surface shadow-card p-3.5"
               >
                 <div className="flex items-center gap-2.5">
                   <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent/15 text-xs font-semibold text-accent">
@@ -235,7 +239,7 @@ function CarouselView({ carousel, tone }) {
         {slides.map((slide, i) => (
           <article
             key={i}
-            className="flex aspect-[4/5] shrink-0 basis-[80%] snap-center flex-col justify-between overflow-hidden rounded-3xl border border-border bg-surface p-5"
+            className="flex aspect-[4/5] shrink-0 basis-[80%] snap-center flex-col justify-between overflow-hidden rounded-3xl border border-border bg-surface shadow-card p-5"
           >
             <div className="flex items-start justify-between gap-2">
               <span className="text-xs font-semibold tracking-wide text-muted">
@@ -280,7 +284,7 @@ function CarouselView({ carousel, tone }) {
       </div>
 
       {(caption || hashtags?.length > 0) && (
-        <div className="space-y-3 rounded-2xl border border-border bg-surface p-4">
+        <div className="space-y-3 rounded-2xl border border-border bg-surface shadow-card p-4">
           <div className="flex items-center justify-between gap-3">
             <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
               Caption
@@ -329,7 +333,7 @@ function ThreadView({ thread, tone }) {
         X · {tweets.length} posts
       </SectionBar>
 
-      <ol className="rounded-2xl border border-border bg-surface px-4 py-4">
+      <ol className="rounded-2xl border border-border bg-surface shadow-card px-4 py-4">
         {tweets.map((tweet, i) => {
           const last = i === tweets.length - 1
           return (
@@ -414,7 +418,7 @@ function CharCount({ text }) {
     <span
       className={[
         'font-mono text-[11px] tabular-nums',
-        over ? 'text-red-400' : near ? 'text-amber-400' : 'text-muted/70',
+        over ? 'text-red-500' : near ? 'text-amber-500' : 'text-muted/70',
       ].join(' ')}
       title={over ? 'Over the 280-character limit' : undefined}
     >

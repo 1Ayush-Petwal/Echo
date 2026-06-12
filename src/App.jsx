@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import StepIndicator from './components/StepIndicator'
+import ThemeToggle from './components/ThemeToggle'
+import { useTheme } from './lib/theme'
+import { EMPTY_INSPIRATION } from './lib/inspiration'
 import BrandVoiceSetup from './screens/BrandVoiceSetup'
+import Inspiration from './screens/Inspiration'
 import Capture from './screens/Capture'
 import Loading from './screens/Loading'
 import Results from './screens/Results'
@@ -10,10 +14,17 @@ import GenerationError from './screens/GenerationError'
  * App shell + state-based navigation (no router — §5). App also owns the
  * synthesis request + the generated kit: Capture builds the request, Loading
  * POSTs it to /api/generate (CP7), and the resulting kit flows to Results.
- * Flow: Brand voice → Capture → Loading → Results → (New) → Capture.
- * Loading branches to the error screen when synthesis fails (§7).
+ * Flow: Brand voice → Inspiration (optional) → Capture → Loading → Results →
+ * (New) → Capture. Loading branches to the error screen when synthesis fails (§7).
  */
-const STEP_FOR_SCREEN = { voice: 0, capture: 1, loading: 1, error: 1, results: 2 }
+const STEP_FOR_SCREEN = {
+  voice: 0,
+  inspiration: 1,
+  capture: 2,
+  loading: 2,
+  error: 2,
+  results: 3,
+}
 
 function EchoMark() {
   return (
@@ -32,13 +43,27 @@ export default function App() {
   const [screen, setScreen] = useState('voice')
   const [request, setRequest] = useState(null)
   const [kit, setKit] = useState(null)
+  // Optional reference material gathered on the Inspiration screen; merged into
+  // the request at generate time so it can shape synthesis (wired server-side).
+  const [inspiration, setInspiration] = useState(EMPTY_INSPIRATION)
+  const { theme, toggle } = useTheme()
   const go = useCallback((next) => setScreen(next), [])
 
-  // Capture → Loading: stash the { input, image, brandVoice } request and start.
-  const handleGenerate = useCallback((req) => {
-    setRequest(req)
-    setScreen('loading')
+  // Inspiration → Capture: keep what the creator added (or skipped) and move on.
+  const handleInspiration = useCallback((collected) => {
+    setInspiration(collected)
+    setScreen('capture')
   }, [])
+
+  // Capture → Loading: stash the { input, image, brandVoice } request — plus any
+  // inspiration — and start synthesis.
+  const handleGenerate = useCallback(
+    (req) => {
+      setRequest({ ...req, inspiration })
+      setScreen('loading')
+    },
+    [inspiration],
+  )
 
   // Loading → Results: keep the kit the endpoint returned and show it.
   const handleDone = useCallback((generatedKit) => {
@@ -63,16 +88,26 @@ export default function App() {
             Echo
           </span>
         </div>
-        <StepIndicator active={STEP_FOR_SCREEN[screen]} />
+        <div className="flex items-center gap-3">
+          <StepIndicator active={STEP_FOR_SCREEN[screen]} />
+          <ThemeToggle theme={theme} onToggle={toggle} />
+        </div>
       </header>
 
       {/* key={screen} remounts the body on each nav, replaying the entrance. */}
       <div key={screen} className="flex flex-1 flex-col animate-rise">
         {screen === 'voice' && (
-          <BrandVoiceSetup onContinue={() => go('capture')} />
+          <BrandVoiceSetup onContinue={() => go('inspiration')} />
+        )}
+        {screen === 'inspiration' && (
+          <Inspiration onContinue={handleInspiration} onBack={() => go('voice')} />
         )}
         {screen === 'capture' && (
-          <Capture onGenerate={handleGenerate} onBack={() => go('voice')} />
+          <Capture
+            onGenerate={handleGenerate}
+            onBack={() => go('inspiration')}
+            onChangeVoice={() => go('voice')}
+          />
         )}
         {screen === 'loading' && (
           <Loading request={request} onDone={handleDone} onError={handleError} />
@@ -82,6 +117,7 @@ export default function App() {
             kit={kit}
             brandVoice={request?.brandVoice}
             onNew={() => go('capture')}
+            onChangeVoice={() => go('voice')}
           />
         )}
         {screen === 'error' && (

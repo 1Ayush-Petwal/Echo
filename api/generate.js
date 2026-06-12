@@ -1,17 +1,20 @@
 /*
  * POST /api/generate — Echo's synthesis endpoint (§7, CP7).
  *
- * Accepts { input, image, brandVoice } and returns the §6 content kit. This is
- * still a MOCK — no model call, no secret — but it is now input-aware: the kit
- * is templated from the creator's brief (or the photo's filename) and their
- * brand-voice tone, so the output actually reflects what they asked for instead
- * of one canned demo. Any real model call and any secret stays server-side —
- * never in the client (§2: "No API keys in client code, ever").
+ * Accepts { input, image, brandVoice, inspiration } and returns the §6 content
+ * kit. This is still a MOCK — no model call, no secret — but it is input-aware:
+ * the kit is templated from the creator's brief (or the photo's filename) and
+ * their voice, so the output reflects what they asked for instead of one canned
+ * demo. Every signal feeds in: the brief picks the subject; the brand-voice
+ * tone, the samples, the "where are these from?" SOURCE, and the INSPIRATION
+ * reference posts all feed tone resolution (in that priority order). Any real
+ * model call and any secret stays server-side — never in the client (§2).
  *
  * TODO (event): replace this deterministic templating with the real LLM
- *   vision+text call. Read `image` (vision), `input`, and `brandVoice`, call the
- *   model, and return the SAME { reel, carousel, thread } shape so the client
- *   never changes. The templating below is the placeholder, not the contract.
+ *   vision+text call. Read `image` (vision), `input`, `brandVoice`, and the
+ *   `inspiration` references, call the model, and return the SAME
+ *   { reel, carousel, thread } shape so the client never changes. The templating
+ *   below is the placeholder, not the contract.
  */
 
 // Per-tone writing style (§5 tone presets). `emoji` gates the playful flourishes;
@@ -66,16 +69,45 @@ function splitAudience(subject) {
   return { product: subject, audience: null }
 }
 
-// The voice to write in: the picked tone, Professional when only samples were
-// given (§7.2), else null — null means "house default copy, no tone chip".
-function resolveTone(brandVoice) {
+// Each social platform has a native register, so "where are these from?" is a
+// sharper default than a blanket Professional. "Other" carries no strong hint.
+const SOURCE_TONE = { linkedin: 'professional', x: 'bold', instagram: 'playful' }
+
+// Any emoji in the inspiration refs reads as a casual, playful style cue.
+const EMOJI_RE = /\p{Extended_Pictographic}/u
+
+// A light read of the reference posts the creator loves: emoji → playful;
+// longer emoji-free prose → professional; otherwise no strong signal.
+function toneFromInspiration(inspiration) {
+  const text = String(inspiration?.refs ?? '').trim()
+  if (!text) return null
+  if (EMOJI_RE.test(text)) return 'playful'
+  return text.split(/\s+/).length >= 12 ? 'professional' : null
+}
+
+/*
+ * The voice to write in. Priority (strongest first):
+ *   1. an explicitly picked tone;
+ *   2. the sample source — names the platform the pasted posts live on, so it's
+ *      a better default register than a blanket Professional;
+ *   3. samples present → Professional (§7.2);
+ *   4. an inspiration style cue (emoji/length);
+ *   5. null — house default copy, no tone chip.
+ */
+function resolveTone(brandVoice, inspiration) {
   const id = brandVoice?.tone ? String(brandVoice.tone).toLowerCase() : null
   if (id && TONE_STYLE[id]) return id
+
+  const src = brandVoice?.source ? String(brandVoice.source).toLowerCase() : null
+  if (src && SOURCE_TONE[src]) return SOURCE_TONE[src]
+
   const samples = brandVoice?.samples
   const hasSamples = Array.isArray(samples)
     ? samples.length > 0
     : Boolean(samples && String(samples).trim())
-  return hasSamples ? 'professional' : null
+  if (hasSamples) return 'professional'
+
+  return toneFromInspiration(inspiration)
 }
 
 // 3–5 hashtags mined from the product words (IG rule §9.2), padded with safe
@@ -199,10 +231,10 @@ function buildThread({ product, audience, toneId, style }) {
   }
 }
 
-function buildKit({ input, image, brandVoice }) {
+function buildKit({ input, image, brandVoice, inspiration }) {
   const subject = deriveSubject({ input, image })
   const { product, audience } = splitAudience(clamp(subject, 80))
-  const toneId = resolveTone(brandVoice)
+  const toneId = resolveTone(brandVoice, inspiration)
   const style = TONE_STYLE[toneId] || TONE_STYLE.playful
   const ctx = { product, audience, toneId, style }
 
@@ -220,13 +252,16 @@ export default function handler(req, res) {
     return
   }
 
-  const { input, image, brandVoice } = req.body ?? {}
+  const { input, image, brandVoice, inspiration } = req.body ?? {}
   console.log('[generate] received', {
     hasInput: Boolean(input),
     hasImage: Boolean(image),
     tone: brandVoice?.tone ?? null,
+    source: brandVoice?.source ?? null,
+    inspirationRefs: Boolean(inspiration?.refs),
+    inspirationVisuals: inspiration?.visuals?.length ?? 0,
   })
 
   // TODO (event): real vision+text synthesis goes here, returning this shape.
-  res.status(200).json(buildKit({ input, image, brandVoice }))
+  res.status(200).json(buildKit({ input, image, brandVoice, inspiration }))
 }

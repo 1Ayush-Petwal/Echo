@@ -16,9 +16,21 @@ export const TONE_PRESETS = [
   { id: 'minimal', label: 'Minimal', blurb: 'Clean, concise, no fluff' },
 ]
 
-export const EMPTY_VOICE = { tone: null, samples: '' }
+// Where the pasted samples come from — optional, single-select ("Where are
+// these from?"). `id` is persisted/sent so synthesis can lean platform-native.
+export const SOURCES = [
+  { id: 'x', label: 'X' },
+  { id: 'instagram', label: 'Instagram' },
+  { id: 'linkedin', label: 'LinkedIn' },
+  { id: 'other', label: 'Other' },
+]
 
-// True once the creator has given us something to actually learn from.
+const SOURCE_IDS = new Set(SOURCES.map((s) => s.id))
+
+export const EMPTY_VOICE = { tone: null, samples: '', source: null }
+
+// True once the creator has given us something to actually learn from. Source
+// alone isn't "voice" — it only labels samples — so it doesn't count here.
 export function hasVoice(voice) {
   return Boolean(voice && (voice.tone || voice.samples.trim()))
 }
@@ -31,6 +43,7 @@ export function loadBrandVoice() {
     return {
       tone: parsed.tone ?? null,
       samples: typeof parsed.samples === 'string' ? parsed.samples : '',
+      source: SOURCE_IDS.has(parsed.source) ? parsed.source : null,
     }
   } catch {
     // Corrupt or blocked storage shouldn't break the app — start fresh.
