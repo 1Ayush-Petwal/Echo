@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import Button from '../components/Button'
+import ImportPosts from '../components/ImportPosts'
 import {
   SOURCES,
   TONE_PRESETS,
@@ -25,6 +26,18 @@ export default function BrandVoiceSetup({ onContinue }) {
   }, [voice])
 
   const setSamples = (samples) => setVoice((v) => ({ ...v, samples }))
+
+  // Imported posts fill the samples field (appended if the creator already
+  // pasted something) and auto-set the source to the platform they came from.
+  const handleImported = ({ posts, source }) => {
+    const text = posts.join('\n\n')
+    setVoice((v) => ({
+      ...v,
+      samples: v.samples.trim() ? `${v.samples.trim()}\n\n${text}` : text,
+      source: source ?? v.source,
+    }))
+  }
+
   // Source + tone are single-select and tap-to-clear, so both stay optional.
   const toggleSource = (id) =>
     setVoice((v) => ({ ...v, source: v.source === id ? null : id }))
@@ -43,7 +56,10 @@ export default function BrandVoiceSetup({ onContinue }) {
         </p>
       </div>
 
-      {/* 1 — Their words first. */}
+      {/* Import recent posts to learn the voice automatically. */}
+      <ImportPosts onImported={handleImported} />
+
+      {/* 1 — Their words first (imported posts land here; editable). */}
       <div className="space-y-2.5">
         <label htmlFor="samples" className="text-sm font-semibold text-ink">
           Your posts <span className="font-normal text-muted">· optional</span>
