@@ -658,3 +658,4 @@ Every generated output, before it's "good":
 - Pick the product name if not "Echo" (alts considered: Doppel, OneShot, Persona, Mirror).
 - Confirm Reel shot-list enrichment: keep `string[]` (default) or move to `{ time, shot, onScreenText, audio }[]` for a richer table.
 ```
+
