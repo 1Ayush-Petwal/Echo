@@ -376,6 +376,56 @@ export function generateMockAudit({ brandVoice = {}, posts = [], trends = {}, in
   }
 }
 
+/*
+ * Assemble the audit contract from model-written section bodies. Mirrors
+ * generateMockAudit's return EXACTLY (so Audit.jsx renders the model output
+ * unchanged), with one deliberate split of responsibility: the four prose
+ * sections come from the model (where natural language adds value), while the
+ * structured Hashtag Audit (keep/retire/add chips) is computed deterministically
+ * here from posts + trends — never trusted to the model — so the chips are always
+ * correct and on-trend. `source` tags provenance ('model' vs 'mock').
+ */
+export function assembleAuditFromSections({
+  brandVoice = {},
+  posts = [],
+  trends = {},
+  inspiration = {},
+  sections = {},
+  source = 'model',
+} = {}) {
+  const list = (Array.isArray(posts) ? posts : []).filter((p) => typeof p === 'string' && p.trim())
+  const ht = auditHashtags(list, trends)
+  const str = (x) => (typeof x === 'string' ? x.trim() : '')
+  const safe = {
+    whatsWorking: str(sections.whatsWorking),
+    whatsMissing: str(sections.whatsMissing),
+    hashtagAudit: str(sections.hashtagAudit),
+    strategicPivot: str(sections.strategicPivot),
+  }
+  return {
+    markdown: composeMarkdown({ sections: safe, trends }),
+    sections: safe,
+    hashtags: ht,
+    meta: {
+      source,
+      niche: trends?.niche ?? null,
+      label: trends?.label ?? null,
+      postCount: list.length,
+      tone: toneLabel(brandVoice?.tone),
+      hasInspiration: hasInspirationSignal(inspiration),
+    },
+  }
+}
+
+// How many of the four critique bodies the model actually filled — the endpoint
+// uses this to decide whether the model output is usable or it should fall back
+// to the templated mock.
+export function countAuditSections(sections = {}) {
+  return ['whatsWorking', 'whatsMissing', 'hashtagAudit', 'strategicPivot'].filter(
+    (k) => typeof sections?.[k] === 'string' && sections[k].trim(),
+  ).length
+}
+
 // ── The real-model seam ──────────────────────────────────────────────────────
 
 function describeVoice(brandVoice) {

@@ -15,7 +15,7 @@
  */
 
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { readFileSync, existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 
@@ -26,6 +26,8 @@ import {
   extractHashtags,
   auditHashtags,
   summarizeAuditForGeneration,
+  assembleAuditFromSections,
+  countAuditSections,
 } from '../src/lib/audit.js'
 import { generateMockBatch, selectNiche, NICHES, GENERIC_NICHE } from '../src/lib/trends.js'
 import { detectAndExtract } from '../src/lib/importAdapters.js'
@@ -205,10 +207,49 @@ const VOICE = { tone: 'playful', samples: ['glow tips daily ✨'], source: 'inst
   ok('the audit→generation handoff is compact, plain-text, and faithful')
 }
 
-// ── End-to-end: real export → parse (F2) → trends (F1) → audit (F3) ────────
+// ── assembleAuditFromSections: model sections → the same contract shape ─────
 {
+  console.log('Unit — assembleAuditFromSections builds the contract from model sections')
+  const trends = selectNiche(BATCH, 'skincare')
+  const sections = {
+    whatsWorking: '- You keep a **playful** voice across posts.',
+    whatsMissing: '- Short-form video is the clear format gap.',
+    hashtagAudit: '- Rotate in higher-momentum skincare tags.',
+    strategicPivot: 'Post a 20s Reel on barrier repair, hook first.',
+  }
+  const audit = assembleAuditFromSections({ brandVoice: VOICE, posts: SKIN_POSTS, trends, sections })
+
+  assert.equal(audit.meta.source, 'model', 'provenance marks it model-built')
+  assert.ok(hasAllSections(audit.markdown), 'composed markdown has all four headed sections')
+  assert.deepEqual(audit.sections, sections, 'the model section bodies are carried through')
+  // The Hashtag Audit chips are computed server-side, never taken from the model.
+  assert.deepEqual(
+    audit.hashtags,
+    auditHashtags(SKIN_POSTS, trends),
+    'hashtags are computed deterministically from posts + trends',
+  )
+  assert.equal(audit.meta.postCount, 3)
+  assert.equal(audit.meta.tone, 'Playful', 'tone is resolved from the brand voice')
+
+  // The fallback gate: enough sections ⇒ usable; too few ⇒ caller serves the mock.
+  assert.equal(countAuditSections(sections), 4, 'counts the filled sections')
+  assert.equal(
+    countAuditSections({ whatsWorking: '  ', whatsMissing: 'x' }),
+    1,
+    'blank/whitespace sections do not count',
+  )
+  ok('the model-audit assembler matches the mock contract; chips stay server-computed')
+}
+
+// ── End-to-end: real export → parse (F2) → trends (F1) → audit (F3) ────────
+// Uses a real personal export that is gitignored (local-only), so skip cleanly
+// when it isn't present rather than crashing the suite.
+const FIXTURE = join(__dirname, 'fixtures', 'posts_1.json')
+if (!existsSync(FIXTURE)) {
+  console.log('Test E2E — skipped (no local test/fixtures/posts_1.json)')
+} else {
   console.log('Test E2E — Instagram export → parsed posts → cached trends → audit')
-  const fixture = readFileSync(join(__dirname, 'fixtures', 'posts_1.json'), 'utf8')
+  const fixture = readFileSync(FIXTURE, 'utf8')
   const { platform, raw } = detectAndExtract('posts_1.json', fixture, 'instagram')
   assert.equal(platform, 'instagram')
 
