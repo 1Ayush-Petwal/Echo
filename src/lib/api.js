@@ -55,3 +55,43 @@ export async function generateKit({ input, image, brandVoice, inspiration } = {}
   }
   return kit
 }
+
+/*
+ * Client → audit endpoint (Feature 3). The single place that calls POST
+ * /api/audit. Sends the brand voice (samples normalized to the §6 string[]
+ * shape, same as generate), the parsed historical posts (Feature 2 output), an
+ * optional niche (the Page 2 Genre Selector pick / "Other" text), and any
+ * inspiration. The server reads today's trends from its own cache and returns
+ * the § Page-3 critique { markdown, sections, hashtags, meta }.
+ *
+ * Like generateKit, this request shape is the seam: when the real model is wired
+ * in server-side, this client code never changes.
+ */
+export async function requestAudit({ brandVoice, posts, niche, inspiration } = {}) {
+  const payload = {
+    brandVoice: {
+      tone: brandVoice?.tone ?? null,
+      samples: samplesToArray(brandVoice?.samples),
+      source: brandVoice?.source ?? null,
+    },
+    posts: Array.isArray(posts) ? posts.filter((p) => typeof p === 'string') : [],
+    niche: niche ?? null,
+    inspiration: normalizeInspiration(inspiration),
+  }
+  const res = await fetch('/api/audit', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+
+  if (!res.ok) {
+    throw new Error(`audit failed: ${res.status}`)
+  }
+
+  const audit = await res.json()
+  // Guard the shape so a bad response surfaces cleanly rather than crashing.
+  if (!audit?.markdown || !audit?.sections) {
+    throw new Error('audit: malformed response')
+  }
+  return audit
+}

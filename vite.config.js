@@ -3,37 +3,68 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import generateHandler from './api/generate.js'
+import trendsHandler from './api/trends.js'
+import harvestHandler from './api/trends-harvest.js'
+import auditHandler from './api/audit.js'
 
 /*
- * Dev-only: serve the /api/generate serverless function locally so the full
- * Capture → Loading → Results flow works under `vite dev` (no Vercel CLI/login
- * needed). Production runs this SAME handler as a Vercel function — this plugin
- * just mounts it as dev middleware, so there's one mock and zero drift. Only
- * applies in `serve`; never touches the production build.
+ * Dev-only: serve the api/* serverless functions locally so the full flow
+ * (Capture → Results, plus the Feature 1 trend endpoints) works under
+ * `vite dev` with no Vercel CLI/login. Production runs these SAME handlers as
+ * Vercel functions — this plugin just mounts them as dev middleware, so there's
+ * one implementation and zero drift. Only applies in `serve`; never touches the
+ * production build.
  */
+// Vite's dev server hands us a raw Node req/res; the Vercel handler expects a
+// parsed body, a `req.query` object, and Express-style res helpers. This bridge
+// supplies all three so a handler runs identically here and on Vercel.
+function bridge(handler) {
+  return async (req, res) => {
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
+      let raw = ''
+      try {
+        for await (const chunk of req) raw += chunk
+        req.body = raw ? JSON.parse(raw) : {}
+      } catch {
+        req.body = {}
+      }
+    } else {
+      req.body = {}
+    }
+    // Mirror Vercel's req.query. Connect strips the mounted route prefix but
+    // keeps the query string on req.url, so the search params survive.
+    try {
+      req.query = Object.fromEntries(new URL(req.url, 'http://localhost').searchParams)
+    } catch {
+      req.query = {}
+    }
+    res.status = (code) => ((res.statusCode = code), res)
+    res.json = (obj) => {
+      res.setHeader('Content-Type', 'application/json')
+      res.end(JSON.stringify(obj))
+      return res
+    }
+    await handler(req, res)
+  }
+}
+
 function devApi() {
+  // Longer paths first: connect matches by prefix, so /api/trends-harvest must
+  // be registered before /api/trends (though their prefixes don't actually
+  // collide — '-' isn't a path separator — order is a safe habit).
+  const routes = {
+    '/api/generate': generateHandler,
+    '/api/audit': auditHandler,
+    '/api/trends-harvest': harvestHandler,
+    '/api/trends': trendsHandler,
+  }
   return {
     name: 'echo-dev-api',
     apply: 'serve',
     configureServer(server) {
-      server.middlewares.use('/api/generate', async (req, res) => {
-        // Vite's dev server hands us a raw Node req/res; the Vercel handler
-        // expects a parsed body + Express-style res helpers. Bridge both.
-        let raw = ''
-        try {
-          for await (const chunk of req) raw += chunk
-          req.body = raw ? JSON.parse(raw) : {}
-        } catch {
-          req.body = {}
-        }
-        res.status = (code) => ((res.statusCode = code), res)
-        res.json = (obj) => {
-          res.setHeader('Content-Type', 'application/json')
-          res.end(JSON.stringify(obj))
-          return res
-        }
-        generateHandler(req, res)
-      })
+      for (const [path, handler] of Object.entries(routes)) {
+        server.middlewares.use(path, bridge(handler))
+      }
     },
   }
 }
