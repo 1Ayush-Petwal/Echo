@@ -16,10 +16,10 @@ import { loadBrandVoice, samplesToArray } from '../lib/brandVoice'
  * Self-contained, like a page that loads its own data: it reads the brand voice
  * from storage and POSTs to /api/audit via requestAudit() (the single client
  * seam) on mount, so it can be loaded in isolation (F5's standalone test) — App
- * only routes here and hands down the optional inspiration. The niche is left to
- * the server to infer from the posts, so the audit still works when Page 2 was
- * skipped. This is the natural end of Audit Mode; "Create a new post" carries
- * the creator on into Creation Mode (Page 4).
+ * routes here and hands down the optional inspiration and the Page 2 niche pick.
+ * When no niche is picked the server infers it from the posts, so the audit
+ * still works when Page 2 was skipped. This is the natural end of Audit Mode;
+ * "Create a new post" carries the creator on into Creation Mode (Page 4).
  *
  * The endpoint returns the templated mock critique until the real model is wired
  * in server-side (api/audit.js) — these renderers don't change when it lands.
@@ -40,6 +40,7 @@ const SECTIONS = [
 
 export default function Audit({
   inspiration,
+  niche = null,
   onAuditReady,
   onCreate,
   onBack,
@@ -62,14 +63,15 @@ export default function Audit({
     async function run() {
       const voice = loadBrandVoice()
       // The historical posts the audit analyzes are the creator's own samples
-      // (imported or pasted on Page 1), split into discrete posts. niche: null
-      // lets the server infer the niche from the posts when Page 2 was skipped.
+      // (imported or pasted on Page 1), split into discrete posts. `niche` is the
+      // Page 2 Genre Selector pick; null lets the server infer it from the posts
+      // when Page 2 was skipped, so the always-on audit works either way.
       const posts = samplesToArray(voice.samples)
 
       let result = null
       let failed = false
       try {
-        result = await requestAudit({ brandVoice: voice, posts, niche: null, inspiration })
+        result = await requestAudit({ brandVoice: voice, posts, niche, inspiration })
       } catch {
         failed = true
       }
@@ -92,7 +94,7 @@ export default function Audit({
     return () => {
       active = false
     }
-  }, [nonce, inspiration, minVisible, onAuditReady])
+  }, [nonce, inspiration, niche, minVisible, onAuditReady])
 
   // Step the status line through the stages while the audit is in flight.
   useEffect(() => {

@@ -12,6 +12,7 @@ import Results from './screens/Results'
 import GenerationError from './screens/GenerationError'
 import { hasVoiceProfile } from './lib/voiceProfile'
 import { summarizeAuditForGeneration } from './lib/audit'
+import { loadGenre, resolveNiche } from './lib/genre'
 
 /*
  * App shell + state-based navigation (no router — §5). App also owns the
@@ -64,13 +65,19 @@ export default function App() {
   // Optional reference material gathered on the Inspiration screen; merged into
   // the request at generate time so it can shape synthesis (wired server-side).
   const [inspiration, setInspiration] = useState(EMPTY_INSPIRATION)
+  // The Page 2 Genre Selector pick (or null = auto-detect). Initialized from
+  // storage so a returning creator who boots straight to the Audit — skipping
+  // Page 2 — still has their niche applied; null lets the server infer it.
+  const [niche, setNiche] = useState(() => resolveNiche(loadGenre()))
   const { theme, toggle } = useTheme()
   const go = useCallback((next) => setScreen(next), [])
 
-  // Inspiration → Audit: keep what the creator added (or skipped), then run the
-  // always-on audit — the first payoff, before any optional Creation Mode.
-  const handleInspiration = useCallback((collected) => {
+  // Inspiration → Audit: keep what the creator added (or skipped) — the
+  // reference material and the genre pick — then run the always-on audit, the
+  // first payoff, before any optional Creation Mode.
+  const handleInspiration = useCallback((collected, pickedNiche) => {
     setInspiration(collected)
+    setNiche(pickedNiche)
     setScreen('audit')
   }, [])
 
@@ -133,6 +140,7 @@ export default function App() {
         {screen === 'audit' && (
           <Audit
             inspiration={inspiration}
+            niche={niche}
             onAuditReady={setAuditResult}
             onCreate={() => go('capture')}
             onBack={() => go('inspiration')}

@@ -5,6 +5,12 @@ import {
   loadInspiration,
   saveInspirationRefs,
 } from '../lib/inspiration'
+import { loadGenre, saveGenre, resolveNiche, OTHER_VALUE } from '../lib/genre'
+import { nicheOptions } from '../lib/trends'
+
+// The Genre Selector's options come straight from the trend taxonomy (the
+// single source of truth), so a picked niche always maps to a real trend slice.
+const NICHE_OPTIONS = nicheOptions()
 
 /*
  * Inspiration (optional). After teaching Echo their voice, the creator can show
@@ -25,12 +31,20 @@ export default function Inspiration({ onContinue, onBack }) {
   const [refs, setRefs] = useState(() => loadInspiration().refs)
   // visuals: { id, url, name, type, size } — url is a session preview only.
   const [visuals, setVisuals] = useState([])
+  // Genre pick: { value, other } — persisted so a returning creator who boots
+  // straight to the Audit still has it applied.
+  const [genre, setGenre] = useState(() => loadGenre())
   const fileRef = useRef(null)
 
   // Persist the reference text as it changes (visuals stay in-session).
   useEffect(() => {
     saveInspirationRefs(refs)
   }, [refs])
+
+  // Persist the genre pick as it changes, for the same reason.
+  useEffect(() => {
+    saveGenre(genre)
+  }, [genre])
 
   // Revoke every preview URL when the screen unmounts — no blob leaks. The ref
   // mirrors the latest list (updated in an effect, never during render) so the
@@ -69,12 +83,16 @@ export default function Inspiration({ onContinue, onBack }) {
     })
 
   const proceed = () =>
-    onContinue({
-      refs: refs.trim(),
-      visuals: visuals.map((v) => ({ name: v.name, type: v.type, size: v.size })),
-    })
+    onContinue(
+      {
+        refs: refs.trim(),
+        visuals: visuals.map((v) => ({ name: v.name, type: v.type, size: v.size })),
+      },
+      resolveNiche(genre),
+    )
 
-  const filled = hasInspiration({ refs, visuals })
+  // A genre pick is meaningful input too, so it flips the button to "Continue".
+  const filled = hasInspiration({ refs, visuals }) || resolveNiche(genre) != null
 
   return (
     <section className="flex flex-1 flex-col gap-7">
@@ -85,6 +103,46 @@ export default function Inspiration({ onContinue, onBack }) {
         <p className="text-pretty leading-relaxed text-muted">
           Optional. Show Echo a few posts or visuals you love and it&apos;ll
           borrow the vibe — never copy it.
+        </p>
+      </div>
+
+      {/* Genre Selector — sets which trend slice the audit measures against. */}
+      <div className="space-y-2.5">
+        <label htmlFor="genre" className="text-sm font-semibold text-ink">
+          Your niche <span className="font-normal text-muted">· optional</span>
+        </label>
+        <div className="relative">
+          <select
+            id="genre"
+            value={genre.value}
+            onChange={(e) => setGenre((g) => ({ ...g, value: e.target.value }))}
+            className="w-full appearance-none rounded-2xl border border-border bg-surface px-4 py-3 pr-11 text-base leading-relaxed text-ink shadow-card focus:border-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+          >
+            <option value="">Auto-detect from my posts</option>
+            {NICHE_OPTIONS.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.label}
+              </option>
+            ))}
+            <option value={OTHER_VALUE}>Something else…</option>
+          </select>
+          <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-muted">
+            <ChevronIcon />
+          </span>
+        </div>
+        {genre.value === OTHER_VALUE && (
+          <input
+            type="text"
+            value={genre.other}
+            onChange={(e) => setGenre((g) => ({ ...g, other: e.target.value }))}
+            maxLength={40}
+            placeholder="Name your niche — e.g. vegan baking, indie game dev"
+            className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-base leading-relaxed text-ink shadow-card placeholder:text-muted/60 focus:border-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+          />
+        )}
+        <p className="text-xs text-muted">
+          Sets which trends your audit is measured against. Leave it on auto and
+          Echo reads the niche from your posts.
         </p>
       </div>
 
@@ -172,6 +230,23 @@ function PlusIcon() {
       aria-hidden="true"
     >
       <path d="M12 5v14M5 12h14" />
+    </svg>
+  )
+}
+
+function ChevronIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="m6 9 6 6 6-6" />
     </svg>
   )
 }
