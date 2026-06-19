@@ -14,37 +14,59 @@
  * (html + attribute) reliably beats :root regardless of source order.
  */
 @theme {
-  /* Light (default): soft cards float on a faintly cool off-white, à la the
-     Social Mate / Looply inspo — airy, rounded, gentle shadows. */
-  --color-bg: #f4f6f9;
+  /* Light (default): soft white cards float on a faintly violet-blue gradient —
+     the brand-voice redesign. Electric-blue accent kept (iQOO nod, §4), now
+     paired with a violet for gradients (logo, tone selection, preview). */
+  --color-bg: #f4f6fd;
+  --color-bg-2: #e9edfa;
   --color-surface: #ffffff;
-  --color-border: #e6e9ef;
-  --color-accent: #2f6bff;
-  --color-accent-hover: #1e54e6;
-  --color-ink: #14161d;
-  --color-muted: #697186;
+  --color-surface-2: #fbfcff;
+  --color-border: #e7ebf4;
+  --color-accent: #3b68f6;
+  --color-accent-hover: #2d54df;
+  --color-accent-soft: #eaf0ff;
+  --color-violet: #7b5cfb;
+  --color-good: #27c26b;
+  --color-ink: #0e1729;
+  --color-muted: #586079;
+  --color-faint: #8a93a6;
 
-  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Space Grotesk', 'Plus Jakarta Sans', system-ui, sans-serif;
 
-  /* Soft elevation for cards — the inspo look (light: visible; dark: subtle). */
-  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 20px -10px rgba(16, 24, 40, 0.14);
+  /* Soft elevation for cards — the redesign look (light: visible; dark: subtle). */
+  --shadow-card: 0 12px 34px -16px rgba(24, 38, 90, 0.2), 0 1px 2px rgba(16, 23, 41, 0.05);
+  --shadow-sm: 0 1px 2px rgba(16, 23, 41, 0.05), 0 1px 3px rgba(16, 23, 41, 0.06);
+  --shadow-md: 0 10px 28px -10px rgba(24, 38, 90, 0.22), 0 3px 10px -3px rgba(24, 38, 90, 0.1);
 
-  /* Motion (§7, CP6): screen/panel entrance + the Echo "ripple" loader.
-     Exposed as the animate-rise / animate-fade-in / animate-ripple utilities. */
+  /* Motion (§7, CP6): screen/panel entrance + the Echo "ripple" loader, plus the
+     redesign's preview-swap. Exposed as animate-* utilities. */
   --animate-rise: rise 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-fade-in: fade-in 0.3s ease-out both;
   --animate-ripple: echo-ripple 1.9s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  --animate-swap: swap 0.42s ease both;
+  --animate-pop: pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
-/* Dark theme — flips the palette when <html data-theme="dark">. This is the
-   original §4 near-black + electric-blue, now the opt-in alternative. */
+/* Dark theme — flips the palette when <html data-theme="dark">. The §4 deep-navy
+   + electric-blue, retuned to the redesign's cooler, more violet dark scheme. */
 html[data-theme='dark'] {
-  --color-bg: #0b0b0f;
-  --color-surface: #15151c;
-  --color-border: #23232e;
-  --color-ink: #f4f4f6;
-  --color-muted: #9a9aa6;
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 26px -14px rgba(0, 0, 0, 0.65);
+  --color-bg: #0a1020;
+  --color-bg-2: #0e1430;
+  --color-surface: #141b30;
+  --color-surface-2: #1a2139;
+  --color-border: #262f4a;
+  --color-accent: #5d83ff;
+  --color-accent-hover: #7a99ff;
+  --color-accent-soft: rgba(93, 131, 255, 0.16);
+  --color-violet: #9b81ff;
+  --color-good: #34d27c;
+  --color-ink: #eef1f8;
+  --color-muted: #9aa4bd;
+  --color-faint: #6c7691;
+  --shadow-card: 0 16px 40px -18px rgba(0, 0, 0, 0.6), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 14px 34px -12px rgba(0, 0, 0, 0.55);
   color-scheme: dark;
 }
 
@@ -60,13 +82,20 @@ body,
 
 body {
   margin: 0;
+  /* Layered radial+linear wash — the redesign's signature backdrop, fixed so it
+     stays put while content scrolls. Falls back to --color-bg on the meta bar. */
   background-color: var(--color-bg);
+  background-image:
+    radial-gradient(1100px 700px at 88% -8%, color-mix(in srgb, var(--color-violet) 12%, transparent), transparent 60%),
+    radial-gradient(900px 620px at 0% 4%, color-mix(in srgb, var(--color-accent) 14%, transparent), transparent 58%),
+    linear-gradient(180deg, var(--color-bg), var(--color-bg-2));
+  background-attachment: fixed;
   color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   /* Theme flips shouldn't hard-cut — ease the background/ink across the toggle. */
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: background-color 0.3s ease, color 0.2s ease;
 }
 
 /* Screen/panel entrance — a brief fade + lift, replayed on navigation. */
@@ -105,14 +134,165 @@ body {
   }
 }
 
-/* Honor reduced-motion: kill the looping ripple, stop any infinite loops. */
+/* Preview body cross-fade as the voice/platform changes (redesign signature). */
+@keyframes swap {
+  0% {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Story-circle entrance after an import lands. */
+@keyframes pop {
+  from {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ============================================================
+   Redesign — signature visuals (brand-voice mockup)
+   Token-driven so they flip cleanly between light/dark.
+   ============================================================ */
+
+/* Glass top bar — frosted, hairline-bordered, sits above scrolling content. */
+.glass-topbar {
+  backdrop-filter: saturate(160%) blur(14px);
+  -webkit-backdrop-filter: saturate(160%) blur(14px);
+  background: color-mix(in srgb, var(--color-bg) 72%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
+}
+
+/* Animated Echo mark — rings rippling outward from a solid dot. */
+.echo-mark {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+.echo-mark .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  z-index: 2;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 22%, transparent);
+}
+.echo-mark .ring {
+  position: absolute;
+  border: 1.6px solid var(--color-accent);
+  border-radius: 50%;
+  opacity: 0;
+  animation: echo-rings 5.4s ease-out infinite;
+}
+.echo-mark .ring:nth-child(1) {
+  animation-delay: 0s;
+}
+.echo-mark .ring:nth-child(2) {
+  animation-delay: 1.8s;
+}
+.echo-mark .ring:nth-child(3) {
+  animation-delay: 3.6s;
+}
+@keyframes echo-rings {
+  0% {
+    width: 8px;
+    height: 8px;
+    opacity: 0.55;
+  }
+  80% {
+    opacity: 0;
+  }
+  100% {
+    width: 34px;
+    height: 34px;
+    opacity: 0;
+  }
+}
+
+/* "Live preview" equalizer — four bars bouncing to a faux audio meter. */
+.eq {
+  display: flex;
+  align-items: flex-end;
+  gap: 2.5px;
+  height: 15px;
+}
+.eq i {
+  width: 3px;
+  border-radius: 2px;
+  background: linear-gradient(var(--color-accent), var(--color-violet));
+  animation: eq 1s ease-in-out infinite;
+}
+.eq i:nth-child(1) {
+  height: 6px;
+  animation-delay: 0s;
+}
+.eq i:nth-child(2) {
+  height: 14px;
+  animation-delay: 0.18s;
+}
+.eq i:nth-child(3) {
+  height: 9px;
+  animation-delay: 0.36s;
+}
+.eq i:nth-child(4) {
+  height: 13px;
+  animation-delay: 0.12s;
+}
+@keyframes eq {
+  0%,
+  100% {
+    transform: scaleY(0.4);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+/* One-shot ripple when a tone card is chosen (appended in JS, then removed). */
+.tone-splash {
+  position: absolute;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-accent) 22%, transparent);
+  transform: translate(-50%, -50%) scale(0);
+  pointer-events: none;
+}
+.tone-splash.go {
+  animation: tone-splash 0.55s ease-out forwards;
+}
+@keyframes tone-splash {
+  to {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0;
+    width: 520px;
+    height: 520px;
+  }
+}
+
+/* Sample-media gradient inside the live preview card. */
+.preview-media {
+  background:
+    radial-gradient(120px 90px at 20% 20%, rgba(255, 255, 255, 0.45), transparent 60%),
+    linear-gradient(135deg, var(--color-violet), var(--color-accent) 55%, var(--color-good));
+}
+
+/* Honor reduced-motion: kill the looping ripples + meters, stop infinite loops. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation-iteration-count: 1 !important;
   }
-  .animate-ripple {
+  .animate-ripple,
+  .echo-mark .ring,
+  .eq i {
     animation: none !important;
   }
 }

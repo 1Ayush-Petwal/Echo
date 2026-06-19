@@ -92,7 +92,7 @@ export default function Loading({ request, onDone, onError, minVisible = 1800 })
     <section className="flex flex-1 flex-col items-center justify-center gap-8 text-center">
       <EchoPulse />
       <div className="space-y-2">
-        <h1 className="text-xl font-semibold text-ink">Composing your kit…</h1>
+        <h1 className="font-display text-xl font-semibold text-ink">Composing your kit…</h1>
         <p className="min-h-5 text-sm text-muted" aria-live="polite">
           <span
             key={generatingVisuals ? 'visuals' : stage}

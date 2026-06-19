@@ -14,12 +14,12 @@ export default function StepIndicator({ active }) {
           aria-label={label}
           aria-current={i === active ? 'step' : undefined}
           className={[
-            'h-1.5 rounded-full transition-all duration-200',
+            'h-[5px] rounded-full transition-all duration-[450ms] ease-[cubic-bezier(.4,0,.2,1)]',
             i === active
-              ? 'w-6 bg-accent'
+              ? 'w-[30px] bg-gradient-to-r from-accent to-violet'
               : i < active
-                ? 'w-1.5 bg-accent/50'
-                : 'w-1.5 bg-border',
+                ? 'w-[9px] bg-accent/55'
+                : 'w-[9px] bg-border',
           ].join(' ')}
         />
       ))}

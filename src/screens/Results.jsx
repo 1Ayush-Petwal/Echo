@@ -33,7 +33,7 @@ export default function Results({ onNew, onChangeVoice, kit, brandVoice, audit }
     <section className="flex flex-1 flex-col gap-6">
       <div className="space-y-3">
         <div className="space-y-1">
-          <h1 className="text-xl font-bold tracking-tight text-ink">
+          <h1 className="font-display text-xl font-bold tracking-tight text-ink">
             Your kit is ready
           </h1>
           <p className="text-sm text-muted">
@@ -109,7 +109,7 @@ function ReelView({ reel, tone }) {
         Reel · script + shots
       </SectionBar>
 
-      <div className="rounded-2xl border border-border bg-surface shadow-card p-4">
+      <div className="rounded-3xl border border-border bg-surface shadow-card p-4">
         <p className="text-[11px] font-semibold uppercase tracking-wide text-accent">
           Hook
         </p>
@@ -118,7 +118,7 @@ function ReelView({ reel, tone }) {
         </p>
       </div>
 
-      <div className="rounded-2xl border border-border bg-surface shadow-card p-4">
+      <div className="rounded-3xl border border-border bg-surface shadow-card p-4">
         <div className="flex items-center justify-between gap-3">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
             Script
@@ -143,7 +143,7 @@ function ReelView({ reel, tone }) {
             return (
               <li
                 key={i}
-                className="rounded-2xl border border-border bg-surface shadow-card p-3.5"
+                className="rounded-3xl border border-border bg-surface shadow-card p-3.5"
               >
                 <div className="flex items-center gap-2.5">
                   <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent/15 text-xs font-semibold text-accent">
@@ -310,7 +310,7 @@ function CarouselView({ carousel, tone }) {
       </div>
 
       {(caption || hashtags?.length > 0) && (
-        <div className="space-y-3 rounded-2xl border border-border bg-surface shadow-card p-4">
+        <div className="space-y-3 rounded-3xl border border-border bg-surface shadow-card p-4">
           <div className="flex items-center justify-between gap-3">
             <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
               Caption
@@ -359,7 +359,7 @@ function ThreadView({ thread, tone }) {
         X · {tweets.length} posts
       </SectionBar>
 
-      <ol className="rounded-2xl border border-border bg-surface shadow-card px-4 py-4">
+      <ol className="rounded-3xl border border-border bg-surface shadow-card px-4 py-4">
         {tweets.map((tweet, i) => {
           const last = i === tweets.length - 1
           return (

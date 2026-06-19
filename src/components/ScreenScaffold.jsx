@@ -7,11 +7,11 @@ export default function ScreenScaffold({ icon, title, subtitle, children }) {
   return (
     <section className="flex flex-1 flex-col">
       <div className="flex flex-1 flex-col items-center justify-center gap-5 text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-border bg-surface text-accent shadow-card">
+        <div className="flex h-16 w-16 items-center justify-center rounded-3xl border border-border bg-accent-soft text-accent shadow-card">
           {icon}
         </div>
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold tracking-tight text-ink">{title}</h1>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-ink">{title}</h1>
           <p className="mx-auto max-w-xs text-pretty leading-relaxed text-muted">
             {subtitle}
           </p>

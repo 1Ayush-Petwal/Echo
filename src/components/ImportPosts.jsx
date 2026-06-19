@@ -65,7 +65,7 @@ const GUIDES = {
 
 const labelFor = (id) => IMPORT_PLATFORMS.find((p) => p.id === id)?.label || id
 
-export default function ImportPosts({ onImported }) {
+export default function ImportPosts({ onImported, hideHeader = false }) {
   const [platform, setPlatform] = useState(IMPORT_PLATFORMS[0].id)
   const [busy, setBusy] = useState(false)
   const [status, setStatus] = useState(null) // { kind: 'ok' | 'err', text }
@@ -97,14 +97,16 @@ export default function ImportPosts({ onImported }) {
 
   return (
     <div className="space-y-3">
-      <div className="space-y-1">
-        <p className="text-sm font-semibold text-ink">Import your posts</p>
-        <p className="text-xs leading-relaxed text-muted">
-          Upload a posts file you exported from a platform and Echo learns your
-          voice from your own posts. It’s read right here in your browser — your
-          file never leaves your device, and there’s no login.
-        </p>
-      </div>
+      {!hideHeader && (
+        <div className="space-y-1">
+          <p className="text-sm font-semibold text-ink">Import your posts</p>
+          <p className="text-xs leading-relaxed text-muted">
+            Upload a posts file you exported from a platform and Echo learns your
+            voice from your own posts. It’s read right here in your browser — your
+            file never leaves your device, and there’s no login.
+          </p>
+        </div>
+      )}
 
       {/* Platform picker — selects which export + instructions to show. */}
       <div role="tablist" aria-label="Platform" className="grid grid-cols-3 gap-2">

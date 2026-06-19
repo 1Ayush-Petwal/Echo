@@ -119,7 +119,7 @@ export default function Audit({
       <section className="flex flex-1 flex-col items-center justify-center gap-8 text-center">
         <EchoPulse />
         <div className="space-y-2">
-          <h1 className="text-xl font-semibold text-ink">Auditing your content…</h1>
+          <h1 className="font-display text-xl font-semibold text-ink">Auditing your content…</h1>
           <p className="min-h-5 text-sm text-muted" aria-live="polite">
             <span key={stage} className="inline-block animate-fade-in">
               {STAGES[stage]}
@@ -164,7 +164,7 @@ export default function Audit({
     <section className="flex flex-1 flex-col gap-5">
       <div className="space-y-3">
         <div className="space-y-1">
-          <h1 className="text-xl font-bold tracking-tight text-ink">
+          <h1 className="font-display text-xl font-bold tracking-tight text-ink">
             Your content audit
           </h1>
           <p className="text-sm text-muted">
@@ -174,7 +174,7 @@ export default function Audit({
         </div>
         <VoiceTag onChange={onChangeVoice} />
         {postCount === 0 && (
-          <p className="rounded-2xl border border-border bg-surface px-4 py-3 text-xs leading-relaxed text-muted shadow-card">
+          <p className="rounded-3xl border border-border bg-surface px-4 py-3 text-xs leading-relaxed text-muted shadow-card">
             No posts imported yet — this read leans on trends alone.{' '}
             <button
               type="button"
@@ -197,7 +197,7 @@ export default function Audit({
           return (
             <article
               key={key}
-              className="space-y-3 rounded-2xl border border-border bg-surface shadow-card p-4"
+              className="space-y-3 rounded-3xl border border-border bg-surface shadow-card p-4"
             >
               <div className="flex items-center gap-2.5">
                 <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-accent/10 text-accent">

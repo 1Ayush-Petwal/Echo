@@ -35,16 +35,16 @@ const STEP_FOR_SCREEN = {
   results: 4,
 }
 
+// The Echo mark with rings rippling outward — the "echo" made literal (pure CSS,
+// keyframes in index.css; stilled under prefers-reduced-motion).
 function EchoMark() {
   return (
-    <svg viewBox="0 0 512 512" className="h-6 w-6 text-accent" aria-hidden="true">
-      <g fill="none" stroke="currentColor">
-        <circle cx="256" cy="256" r="150" strokeWidth="14" opacity="0.26" />
-        <circle cx="256" cy="256" r="104" strokeWidth="16" opacity="0.55" />
-        <circle cx="256" cy="256" r="58" strokeWidth="18" />
-      </g>
-      <circle cx="256" cy="256" r="22" fill="currentColor" />
-    </svg>
+    <span className="echo-mark h-[34px] w-[34px] flex-none" aria-hidden="true">
+      <span className="ring" />
+      <span className="ring" />
+      <span className="ring" />
+      <span className="dot" />
+    </span>
   )
 }
 
@@ -111,23 +111,34 @@ export default function App() {
     window.scrollTo(0, 0)
   }, [screen])
 
+  // The brand-voice setup is the wide, two-column signature screen (it collapses
+  // to one column on phones); every other screen keeps the focused mobile width.
+  const wide = screen === 'voice'
+
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-6 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-      <header className="flex items-center justify-between pb-8">
-        <div className="flex items-center gap-2">
-          <EchoMark />
-          <span className="text-sm font-semibold tracking-tight text-ink">
-            Echo
-          </span>
-        </div>
-        <div className="flex items-center gap-3">
+    <div className="flex min-h-dvh w-full flex-col">
+      <header className="glass-topbar sticky top-0 z-40">
+        <div className="mx-auto flex w-full max-w-[1080px] items-center gap-4 px-[clamp(1rem,4vw,1.75rem)] py-3.5 pt-[max(0.875rem,env(safe-area-inset-top))]">
+          <div className="flex items-center gap-[11px]">
+            <EchoMark />
+            <span className="font-display text-[19px] font-bold tracking-tight text-ink">
+              Echo
+            </span>
+          </div>
+          <div className="flex-1" />
           <StepIndicator active={STEP_FOR_SCREEN[screen]} />
           <ThemeToggle theme={theme} onToggle={toggle} />
         </div>
       </header>
 
-      {/* key={screen} remounts the body on each nav, replaying the entrance. */}
-      <div key={screen} className="flex flex-1 flex-col animate-rise">
+      <main
+        className={[
+          'mx-auto flex w-full flex-1 flex-col px-[clamp(1rem,4vw,1.75rem)] pt-[clamp(1.25rem,4vw,2.5rem)] pb-[max(1.5rem,env(safe-area-inset-bottom))]',
+          wide ? 'max-w-[1080px]' : 'max-w-md',
+        ].join(' ')}
+      >
+        {/* key={screen} remounts the body on each nav, replaying the entrance. */}
+        <div key={screen} className="flex flex-1 flex-col animate-rise">
         {screen === 'voice' && (
           <VoiceProfileSetup
             onDone={() => go('inspiration')}
@@ -172,7 +183,8 @@ export default function App() {
             onStartOver={() => go('capture')}
           />
         )}
-      </div>
+        </div>
+      </main>
     </div>
   )
 }

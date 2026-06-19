@@ -13,7 +13,7 @@ import { useCallback, useEffect, useState } from 'react'
 const STORAGE_KEY = 'echo.theme.v1'
 
 // Matches --color-bg per theme so the mobile status bar blends with the app.
-const THEME_COLOR = { light: '#f4f6f9', dark: '#0b0b0f' }
+const THEME_COLOR = { light: '#f4f6fd', dark: '#0a1020' }
 
 export function loadTheme() {
   try {

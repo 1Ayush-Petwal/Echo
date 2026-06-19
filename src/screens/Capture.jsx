@@ -172,7 +172,7 @@ export default function Capture({ onGenerate, onBack, onChangeVoice }) {
     <form className="flex flex-1 flex-col gap-6" onSubmit={handleSubmit}>
       <div className="space-y-3">
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold tracking-tight text-ink">
+          <h1 className="font-display text-2xl font-bold tracking-tight text-ink">
             What are you promoting?
           </h1>
           <p className="text-pretty leading-relaxed text-muted">
@@ -194,7 +194,7 @@ export default function Capture({ onGenerate, onBack, onChangeVoice }) {
           className="peer sr-only"
         />
         {photoUrl ? (
-          <div className="relative h-44 overflow-hidden rounded-2xl border border-border bg-surface shadow-card">
+          <div className="relative h-44 overflow-hidden rounded-3xl border border-border bg-surface shadow-card">
             <img
               src={photoUrl}
               alt="Selected product"
@@ -224,9 +224,9 @@ export default function Capture({ onGenerate, onBack, onChangeVoice }) {
         ) : (
           <label
             htmlFor={PHOTO_INPUT_ID}
-            className="flex h-44 cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border bg-surface text-center shadow-card transition duration-150 hover:border-accent/50 active:scale-[0.99] peer-focus-visible:border-accent peer-focus-visible:ring-2 peer-focus-visible:ring-accent/50"
+            className="flex h-44 cursor-pointer flex-col items-center justify-center gap-3 rounded-3xl border border-dashed border-border bg-surface text-center shadow-card transition duration-150 hover:border-accent/50 active:scale-[0.99] peer-focus-visible:border-accent peer-focus-visible:ring-2 peer-focus-visible:ring-accent/50"
           >
-            <span className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-bg text-accent">
+            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-soft text-accent">
               <CameraIcon />
             </span>
             <span className="text-sm font-medium text-ink">
